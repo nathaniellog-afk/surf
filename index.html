@@ -197,7 +197,112 @@ body{
 [data-theme="light"] .astro-moon{display:none;}
 
 /* ============================================
-   BOTÃO SHARE (dentro do card de condições)
+   BOTÃO EXPANDIR GRÁFICO
+   ============================================ */
+.expand-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;height:32px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text-dim);
+  cursor:pointer;
+  transition:all .2s ease;
+  flex-shrink:0;
+}
+.expand-btn:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);transform:translateY(-1px);}
+
+/* ============================================
+   MODAL FULLSCREEN DO GRÁFICO
+   ============================================ */
+.chart-modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.82);
+  z-index:1000;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  padding:16px;
+  align-items:center;
+  justify-content:center;
+}
+.chart-modal.open{display:flex;}
+.chart-modal-inner{
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:16px;
+  width:100%;
+  max-width:1400px;
+  max-height:calc(100vh - 32px);
+  display:flex;
+  flex-direction:column;
+  box-shadow:0 24px 60px -12px rgba(0,0,0,.6);
+  overflow:hidden;
+}
+.chart-modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.chart-modal-title{
+  font-size:14px;
+  font-weight:600;
+  color:var(--text);
+  letter-spacing:-.01em;
+}
+.chart-modal-header .icon-btn{
+  width:32px;height:32px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text-dim);
+  font-size:16px;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+.chart-modal-header .icon-btn:hover{background:var(--surface-hi);color:var(--text);}
+.chart-modal-body{
+  flex:1;
+  min-height:0;
+  padding:18px;
+  overflow:hidden;
+  position:relative;
+}
+.chart-modal-body canvas{
+  width:100% !important;
+  height:100% !important;
+  max-height:100%;
+}
+.chart-modal-legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:18px;
+  justify-content:center;
+  padding:12px 18px;
+  border-top:1px solid var(--border);
+  font-size:11px;
+  color:var(--text-dim);
+  flex-shrink:0;
+}
+.chart-modal-legend>div{display:flex;align-items:center;gap:6px;}
+
+/* Em modo landscape no mobile, usa o espaço inteiro */
+@media(max-width:900px){
+  .chart-modal{padding:8px;}
+  .chart-modal-inner{max-height:calc(100vh - 16px);border-radius:12px;}
+  .chart-modal-header{padding:10px 14px;}
+  .chart-modal-body{padding:12px;}
+  .chart-modal-legend{gap:10px;padding:8px 14px;font-size:10px;}
+}
+
+/* ============================================
+   BOTÃO SHARE
    ============================================ */
 .share-btn{
   display:inline-flex;
@@ -225,6 +330,24 @@ body{
   color:#fff;
 }
 [data-theme="light"] .share-btn:hover{background:rgba(255,255,255,.4);border-color:rgba(255,255,255,.6);}
+
+/* Variante inline (embaixo do diagnóstico do vento) - em pill com texto */
+.share-btn.share-btn-inline{
+  width:auto;
+  height:auto;
+  padding:5px 12px;
+  margin-left:0;
+  margin-top:6px;
+  gap:6px;
+  border-radius:999px;
+  font-family:inherit;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.01em;
+  align-self:flex-start;
+  white-space:nowrap;
+}
+.share-btn.share-btn-inline svg{flex-shrink:0;}
 
 /* ============================================
    BOTÃO ROTA
@@ -676,14 +799,33 @@ body{
     <span>Rota</span>
   </button>
   <button class="spot-btn active" onclick="selectSpot(0)">Taíba</button>
-  <button class="spot-btn" onclick="selectSpot(1)">Leste Oeste</button>
+  <button class="spot-btn" onclick="selectSpot(1)" title="Leste Oeste">Lest</button>
   <button class="spot-btn" onclick="selectSpot(2)">Iguape</button>
-  <button class="spot-btn" onclick="selectSpot(3)">Titanzinho</button>
+  <button class="spot-btn" onclick="selectSpot(3)" title="Titanzinho">Titan</button>
   <button class="spot-btn" onclick="selectSpot(4)">Pecém</button>
 </div>
 
 <div class="main">
   <div id="app"><div class="loading"><div class="spinner"></div>Buscando condições...</div></div>
+</div>
+
+<!-- Modal fullscreen do gráfico -->
+<div id="chartModal" class="chart-modal" onclick="closeChartFullscreen(event)">
+  <div class="chart-modal-inner" onclick="event.stopPropagation()">
+    <div class="chart-modal-header">
+      <div class="chart-modal-title" id="chartModalTitle">Gráfico de previsão</div>
+      <button class="icon-btn" onclick="closeChartFullscreen()" title="Fechar" aria-label="Fechar">✕</button>
+    </div>
+    <div class="chart-modal-body">
+      <canvas id="mainChartFull"></canvas>
+    </div>
+    <div class="chart-modal-legend">
+      <div><span style="display:inline-block;width:18px;height:2px;background:var(--accent);border-radius:1px;vertical-align:middle;"></span> Ondas (m)</div>
+      <div><span style="display:inline-block;width:18px;height:0;border-top:2px dashed var(--warn);vertical-align:middle;"></span> Vento (km/h)</div>
+      <div><span style="display:inline-block;width:18px;height:10px;background:var(--info);opacity:.6;border-radius:2px;vertical-align:middle;"></span> Maré (m)</div>
+      <div><span style="display:inline-block;width:18px;height:10px;background:var(--info);opacity:.35;border-radius:2px;vertical-align:middle;"></span> Chuva (mm)</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -956,7 +1098,7 @@ function buildHTML(){
     days+=`<div class="day-card${d===curDay?' active':''}" onclick="selectDay(${d})">
       <div class="day-name">${DAYS_PT[ddate.getDay()]}</div>
       <div class="day-icon">${weatherIcon(dr,parseFloat(dw))}</div>
-      <div class="day-wave">${dh}</div>
+      <div class="day-wave" style="display:none;">${dh}</div>
       <div style="font-size:15px;margin-top:2px;" title="${dmoon.name}">${dmoon.emoji}</div>
       ${dicon?`<div style="font-size:11px;margin-top:1px;">${dicon}</div>`:'<div style="height:13px"></div>'}
     </div>`;
@@ -991,14 +1133,17 @@ function buildHTML(){
   return `
     <!-- Linha 1: Card de condições atuais -->
     <div style="margin-bottom:8px;">
-      <div class="current-card" style="padding:14px 20px;border-radius:18px;gap:18px;min-width:0;width:100%;flex-direction:row;align-items:center;">
-        <!-- Info spot: data, nome, badges, desc vento — tudo numa coluna compacta -->
+      <div class="current-card" style="padding:10px 18px;border-radius:16px;gap:16px;min-width:0;width:100%;flex-direction:row;align-items:center;">
+        <!-- Info spot: nome, rating, botão compartilhar -->
         <div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex-shrink:0;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
             <div style="font-size:17px;font-weight:700;color:var(--text);white-space:nowrap;letter-spacing:-.01em;">${s.name}</div>
             <span class="rating-badge ${rc}" style="padding:3px 9px;font-size:10px;white-space:nowrap;">${rl}</span>
           </div>
-          <div style="font-size:12px;color:${wq.cls==='wind-on'?'var(--danger)':wq.cls==='wind-off'?'var(--accent)':'var(--text-dim)'};white-space:nowrap;line-height:1.5;">${wq.desc}<br><span style="font-weight:700;">${wq.desc2}</span></div>
+          <button class="share-btn share-btn-inline" id="shareBtn" onclick="shareSnapshot()" title="Compartilhar" aria-label="Compartilhar">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span>Compartilhar</span>
+          </button>
         </div>
         <!-- Separador -->
         <div style="width:1px;align-self:stretch;background:var(--border);flex-shrink:0;"></div>
@@ -1056,9 +1201,6 @@ function buildHTML(){
   </div>
 </div>
           <div class="stat" style="padding:0 14px;border-right:none;"><div class="stat-unit">Chuva</div><div class="stat-val" style="font-size:20px;">${rain}</div><div class="stat-lbl">mm</div></div>
-          <button class="share-btn" id="shareBtn" onclick="shareSnapshot()" title="Compartilhar" aria-label="Compartilhar">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          </button>
         </div>
       </div>
     </div>
@@ -1069,7 +1211,15 @@ function buildHTML(){
     </div>
 
     <div class="sec">
-      <div class="sec-title">Gráfico de previsão — dia</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0;">
+          <div class="sec-title" style="margin-bottom:0;">Gráfico de previsão — dia</div>
+          <span class="wind-diag ${wq.cls}" style="font-size:10px;" title="${wq.desc} — ${wq.desc2}">${wq.desc} · ${wq.desc2}</span>
+        </div>
+        <button class="expand-btn" onclick="openChartFullscreen()" title="Expandir gráfico" aria-label="Expandir gráfico">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+        </button>
+      </div>
       <div class="chart-wrap">
         <canvas id="mainChart" height="110"></canvas>
         <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
@@ -1387,10 +1537,11 @@ function renderWeekChart(){
   });
 }
 
-function renderChart(){
+function renderChart(targetCanvasId){
   const _tc=themeColors();
-  chartDay=Math.max(0,Math.min(6,chartDay)); // aceita todos os 7 dias
-  updateChartDayLabel();
+  const isFullscreen=!!targetCanvasId;
+  if(!isFullscreen)chartDay=Math.max(0,Math.min(6,chartDay)); // aceita todos os 7 dias
+  if(!isFullscreen)updateChartDayLabel();
   const m=data.marine,w=data.weather,off=chartDay*24;
   const now=new Date();
   const curHour=now.getHours();
@@ -1574,11 +1725,15 @@ function renderChart(){
     }
   };
 
-  const ctx=document.getElementById('mainChart');
+  const ctx=document.getElementById(targetCanvasId||'mainChart');
   if(!ctx)return;
-  if(chart)chart.destroy();
+  if(isFullscreen){
+    if(window.chartFull)window.chartFull.destroy();
+  } else {
+    if(chart)chart.destroy();
+  }
 
-  chart=new Chart(ctx,{
+  const _newChart=new Chart(ctx,{
     plugins:[overlayPlugin],
     data:{
       labels,
@@ -1708,7 +1863,42 @@ function renderChart(){
       }
     }
   });
+  if(isFullscreen){window.chartFull=_newChart;} else {chart=_newChart;}
 }
+
+function openChartFullscreen(){
+  if(!data)return;
+  const modal=document.getElementById('chartModal');
+  const title=document.getElementById('chartModalTitle');
+  if(title){
+    const s=SPOTS[curSpot];
+    const m=data.marine;
+    const dd=new Date(m.hourly.time[chartDay*24]);
+    const isToday=chartDay===0;
+    const label=isToday?'Hoje':`${DAYS_PT[dd.getDay()]}, ${dd.getDate()}/${dd.getMonth()+1}`;
+    title.textContent=`${s.name} — ${label}`;
+  }
+  modal.classList.add('open');
+  document.body.style.overflow='hidden';
+  // Renderiza no canvas full depois do modal aparecer (pra ter dimensões corretas)
+  setTimeout(()=>renderChart('mainChartFull'),50);
+}
+
+function closeChartFullscreen(ev){
+  if(ev&&ev.target&&ev.target.id!=='chartModal'&&ev.type==='click'&&!ev.target.closest('[onclick*="closeChartFullscreen"]'))return;
+  const modal=document.getElementById('chartModal');
+  modal.classList.remove('open');
+  document.body.style.overflow='';
+  if(window.chartFull){window.chartFull.destroy();window.chartFull=null;}
+}
+
+// ESC fecha
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    const modal=document.getElementById('chartModal');
+    if(modal&&modal.classList.contains('open'))closeChartFullscreen();
+  }
+});
 
 function openRoute(){
   const s=SPOTS[curSpot];
