@@ -197,6 +197,65 @@ body{
 [data-theme="light"] .astro-moon{display:none;}
 
 /* ============================================
+   MAPA DE SWELL (Windy embed)
+   ============================================ */
+.map-wrap{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  position:relative;
+  aspect-ratio:16/10;
+  min-height:360px;
+}
+.map-wrap iframe{
+  width:100%;
+  height:100%;
+  border:0;
+  display:block;
+}
+.map-layer-btn{
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  padding:5px 12px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:600;
+  cursor:pointer;
+  font-family:inherit;
+  transition:all .2s ease;
+  letter-spacing:.01em;
+}
+.map-layer-btn:hover{background:var(--surface-hi);color:var(--text);border-color:var(--border-hi);}
+.map-layer-btn.active{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+}
+.map-open-btn{
+  display:inline-flex;
+  align-items:center;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  padding:5px 12px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:600;
+  cursor:pointer;
+  font-family:inherit;
+  transition:all .2s ease;
+  text-decoration:none;
+}
+.map-open-btn:hover{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);}
+
+@media(max-width:700px){
+  .map-wrap{min-height:320px;aspect-ratio:4/3;}
+}
+
+/* ============================================
    BOTÃO EXPANDIR GRÁFICO
    ============================================ */
 .expand-btn{
@@ -348,6 +407,18 @@ body{
   white-space:nowrap;
 }
 .share-btn.share-btn-inline svg{flex-shrink:0;}
+/* Variante Rota: destaque verde (accent) pra diferenciar */
+.share-btn.route-btn-inline{
+  margin-top:4px;
+  background:var(--accent-soft);
+  border-color:var(--accent);
+  color:var(--accent);
+}
+.share-btn.route-btn-inline:hover{
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+}
 
 /* ============================================
    BOTÃO ROTA
@@ -378,6 +449,44 @@ body{
 }
 .route-btn:active{transform:translateY(0);}
 .route-btn svg{flex-shrink:0;}
+
+/* ============================================
+   SPOT SELECT (dropdown de picos no card)
+   ============================================ */
+.spot-select{
+  font-family:inherit;
+  font-size:17px;
+  font-weight:700;
+  color:var(--text);
+  letter-spacing:-.01em;
+  line-height:1.1;
+  background:transparent;
+  border:1px solid transparent;
+  border-radius:8px;
+  padding:3px 28px 3px 8px;
+  margin-left:-8px;
+  cursor:pointer;
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23EAF4F2' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 8px center;
+  background-size:12px;
+  transition:all .2s ease;
+  max-width:180px;
+}
+.spot-select:hover{background-color:var(--surface-2);border-color:var(--border-hi);}
+.spot-select:focus{outline:none;background-color:var(--surface-2);border-color:var(--accent);}
+.spot-select option{
+  background:var(--bg-2);
+  color:var(--text);
+  font-weight:600;
+  padding:8px;
+}
+[data-theme="light"] .spot-select{
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230A2844' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
 
 /* ============================================
    BADGES E RATINGS
@@ -793,18 +902,6 @@ body{
   </div>
 </div>
 
-<div class="spot-bar">
-  <button class="route-btn" onclick="openRoute()" title="Abrir rota no Google Maps" aria-label="Abrir rota no Google Maps">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-    <span>Rota</span>
-  </button>
-  <button class="spot-btn active" onclick="selectSpot(0)">Taíba</button>
-  <button class="spot-btn" onclick="selectSpot(1)" title="Leste Oeste">Lest</button>
-  <button class="spot-btn" onclick="selectSpot(2)">Iguape</button>
-  <button class="spot-btn" onclick="selectSpot(3)" title="Titanzinho">Titan</button>
-  <button class="spot-btn" onclick="selectSpot(4)">Pecém</button>
-</div>
-
 <div class="main">
   <div id="app"><div class="loading"><div class="spinner"></div>Buscando condições...</div></div>
 </div>
@@ -813,17 +910,25 @@ body{
 <div id="chartModal" class="chart-modal" onclick="closeChartFullscreen(event)">
   <div class="chart-modal-inner" onclick="event.stopPropagation()">
     <div class="chart-modal-header">
-      <div class="chart-modal-title" id="chartModalTitle">Gráfico de previsão</div>
+      <div class="chart-modal-title" id="chartModalTitle">Gráfico</div>
       <button class="icon-btn" onclick="closeChartFullscreen()" title="Fechar" aria-label="Fechar">✕</button>
     </div>
     <div class="chart-modal-body">
-      <canvas id="mainChartFull"></canvas>
+      <canvas id="mainChartFull" class="chart-modal-canvas" style="display:none;"></canvas>
+      <canvas id="weekChartFull" class="chart-modal-canvas" style="display:none;"></canvas>
     </div>
-    <div class="chart-modal-legend">
+    <div class="chart-modal-legend" id="chartModalLegendMain" style="display:none;">
       <div><span style="display:inline-block;width:18px;height:2px;background:var(--accent);border-radius:1px;vertical-align:middle;"></span> Ondas (m)</div>
       <div><span style="display:inline-block;width:18px;height:0;border-top:2px dashed var(--warn);vertical-align:middle;"></span> Vento (km/h)</div>
       <div><span style="display:inline-block;width:18px;height:10px;background:var(--info);opacity:.6;border-radius:2px;vertical-align:middle;"></span> Maré (m)</div>
       <div><span style="display:inline-block;width:18px;height:10px;background:var(--info);opacity:.35;border-radius:2px;vertical-align:middle;"></span> Chuva (mm)</div>
+    </div>
+    <div class="chart-modal-legend" id="chartModalLegendWeek" style="display:none;">
+      <div><span style="display:inline-block;width:12px;height:10px;background:rgba(29,158,117,0.75);border-radius:2px;vertical-align:middle;"></span> Onda</div>
+      <div><span style="display:inline-block;width:12px;height:10px;background:rgba(55,138,221,0.75);border-radius:2px;vertical-align:middle;"></span> Período</div>
+      <div><span style="display:inline-block;width:12px;height:10px;background:rgba(250,199,117,0.75);border-radius:2px;vertical-align:middle;"></span> Vento</div>
+      <div><span style="display:inline-block;width:12px;height:10px;background:rgba(93,202,165,0.75);border-radius:2px;vertical-align:middle;"></span> Offshore</div>
+      <div><span style="display:inline-block;width:12px;height:10px;background:rgba(186,117,23,0.75);border-radius:2px;vertical-align:middle;"></span> Maré</div>
     </div>
   </div>
 </div>
@@ -889,7 +994,6 @@ let curSpot=0,curDay=0,data=null,chart=null,chartMode='default',chartDay=0;
 
 function selectSpot(i){
   curSpot=i;curDay=0;
-  document.querySelectorAll('.spot-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
   loadData();
 }
 
@@ -1134,16 +1238,22 @@ function buildHTML(){
     <!-- Linha 1: Card de condições atuais -->
     <div style="margin-bottom:8px;">
       <div class="current-card" style="padding:10px 18px;border-radius:16px;gap:16px;min-width:0;width:100%;flex-direction:row;align-items:center;">
-        <!-- Info spot: nome, rating, botão compartilhar -->
+        <!-- Info spot: dropdown, rating, botão compartilhar -->
         <div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex-shrink:0;">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
-            <div style="font-size:17px;font-weight:700;color:var(--text);white-space:nowrap;letter-spacing:-.01em;">${s.name}</div>
-            <span class="rating-badge ${rc}" style="padding:3px 9px;font-size:10px;white-space:nowrap;">${rl}</span>
+          <select class="spot-select" onchange="selectSpot(parseInt(this.value))" aria-label="Escolher pico">
+            ${SPOTS.map((sp,i)=>`<option value="${i}"${i===curSpot?' selected':''}>${sp.name}</option>`).join('')}
+          </select>
+          <span class="rating-badge ${rc}" style="padding:3px 9px;font-size:10px;white-space:nowrap;align-self:flex-start;">${rl}</span>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+            <button class="share-btn share-btn-inline" id="shareBtn" onclick="shareSnapshot()" title="Enviar" aria-label="Enviar" style="margin-top:0;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <span>Enviar</span>
+            </button>
+            <button class="share-btn share-btn-inline route-btn-inline" onclick="openRoute()" title="Abrir rota no Google Maps" aria-label="Abrir rota no Google Maps" style="margin-top:0;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>Rota</span>
+            </button>
           </div>
-          <button class="share-btn share-btn-inline" id="shareBtn" onclick="shareSnapshot()" title="Compartilhar" aria-label="Compartilhar">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            <span>Compartilhar</span>
-          </button>
         </div>
         <!-- Separador -->
         <div style="width:1px;align-self:stretch;background:var(--border);flex-shrink:0;"></div>
@@ -1216,7 +1326,7 @@ function buildHTML(){
           <div class="sec-title" style="margin-bottom:0;">Gráfico de previsão — dia</div>
           <span class="wind-diag ${wq.cls}" style="font-size:10px;" title="${wq.desc} — ${wq.desc2}">${wq.desc} · ${wq.desc2}</span>
         </div>
-        <button class="expand-btn" onclick="openChartFullscreen()" title="Expandir gráfico" aria-label="Expandir gráfico">
+        <button class="expand-btn" onclick="openChartFullscreen('main')" title="Expandir gráfico" aria-label="Expandir gráfico">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
         </button>
       </div>
@@ -1240,10 +1350,38 @@ function buildHTML(){
     </div>
 
     <div class="sec">
-      <div class="sec-title">Melhor dia da semana</div>
-      <div class="chart-wrap" style="padding:14px 16px;">
-        <canvas id="weekChart" height="90"></canvas>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;">
+        <div class="sec-title" style="margin-bottom:0;">Melhor dia da semana</div>
+        <button class="expand-btn" onclick="openChartFullscreen('week')" title="Expandir gráfico" aria-label="Expandir gráfico">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+        </button>
       </div>
+      <div class="chart-wrap" style="padding:14px 16px;">
+        <div style="position:relative;height:300px;">
+          <canvas id="weekChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap;">
+        <div class="sec-title" style="margin-bottom:0;">Mapa de swell — Litoral Ceará</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="map-layer-btn active" data-layer="swellperiod" onclick="switchMapLayer('swellperiod',this)">Período</button>
+          <button class="map-layer-btn" data-layer="waves" onclick="switchMapLayer('waves',this)">Ondas</button>
+          <button class="map-layer-btn" data-layer="wind" onclick="switchMapLayer('wind',this)">Vento</button>
+          <a href="https://www.windy.com/?-3.500,-38.800,8" target="_blank" rel="noopener" class="map-open-btn" title="Abrir no Windy.com">↗ Windy</a>
+        </div>
+      </div>
+      <div class="map-wrap">
+        <iframe
+          id="windyMap"
+          src="https://embed.windy.com/embed2.html?lat=-3.5&lon=-38.8&detailLat=-3.5&detailLon=-38.8&width=650&height=450&zoom=8&level=surface&overlay=swellperiod&product=ecmwfWaves&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=true&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1"
+          frameborder="0"
+          loading="lazy"
+          allowfullscreen></iframe>
+      </div>
+      <div style="font-size:10px;color:var(--text-faint);margin-top:6px;text-align:right;">Fonte: windy.com · modelo ECMWF Waves</div>
     </div>
 `;
 }
@@ -1350,8 +1488,9 @@ function switchChart(mode){
 }
 
 let weekChart=null;
-function renderWeekChart(){
+function renderWeekChart(targetCanvasId){
   const _tc=themeColors();
+  const isFullscreen=!!targetCanvasId;
   const m=data.marine,w=data.weather;
   const labels=[];
   const dWave=[],dPeriod=[],dWind=[],dOffshore=[],dTide=[],waveVals=[],bestHours=[];
@@ -1419,8 +1558,9 @@ function renderWeekChart(){
       const {ctx,scales:{x,y}}=ch;
       ctx.save();
 
+      const maxTot=Math.max(...totals);
+
       // Labels dentro de cada segmento empilhado
-      // Ordem de empilhamento (de baixo pra cima): Onda, Período, Vento, Offshore, Maré
       const segments=[
         {label:'Onda',data:dWave},
         {label:'Período',data:dPeriod},
@@ -1428,93 +1568,157 @@ function renderWeekChart(){
         {label:'Offshore',data:dOffshore},
         {label:'Maré',data:dTide},
       ];
-      ctx.font='600 9px Inter,system-ui,sans-serif';
       ctx.textAlign='center';
       ctx.textBaseline='middle';
       for(let i=0;i<totals.length;i++){
         const xPos=x.getPixelForValue(i);
+        const barWidth=Math.abs(x.getPixelForValue(1)-x.getPixelForValue(0));
         let cumulative=0;
         for(const seg of segments){
           const val=seg.data[i];
-          if(val<=0){continue;}
+          if(val<=0){cumulative+=val;continue;}
           const yBottom=y.getPixelForValue(cumulative);
           const yTop=y.getPixelForValue(cumulative+val);
           const segHeight=yBottom-yTop;
           // Só desenha se o segmento for alto o suficiente pro texto
-          if(segHeight>=14){
+          if(segHeight>=16){
             const yMid=(yBottom+yTop)/2;
             const txt=seg.label;
+            ctx.font='600 10px Inter,system-ui,sans-serif';
             const tw=ctx.measureText(txt).width;
-            // Se a barra for estreita demais, também pula
-            const barWidth=x.getPixelForValue(1)-x.getPixelForValue(0);
-            if(tw<barWidth*0.75){
-              // Contorno escuro pra garantir legibilidade em cima de qualquer cor
-              ctx.lineWidth=2.5;
-              ctx.strokeStyle=_tc.isLight?'rgba(255,255,255,0.9)':'rgba(10,22,40,0.75)';
-              ctx.strokeText(txt,xPos,yMid);
-              ctx.fillStyle=_tc.isLight?'rgba(10,40,68,0.9)':'rgba(255,255,255,0.95)';
+            if(tw<barWidth*0.82){
+              // Sombra sutil pra legibilidade
+              ctx.shadowColor='rgba(0,0,0,0.35)';
+              ctx.shadowBlur=3;
+              ctx.shadowOffsetY=1;
+              ctx.fillStyle='rgba(255,255,255,0.98)';
               ctx.fillText(txt,xPos,yMid);
+              ctx.shadowColor='transparent';
+              ctx.shadowBlur=0;
+              ctx.shadowOffsetY=0;
             }
           }
           cumulative+=val;
         }
       }
 
-      // Pontuação total + hora no topo da barra
-      ctx.textAlign='center';
-      ctx.textBaseline='bottom';
+      // Pill no topo com HORA + SCORE — destaque no melhor dia
       for(let i=0;i<totals.length;i++){
         const xPos=x.getPixelForValue(i);
         const yTop=y.getPixelForValue(totals[i]);
-        const totalTxt=totals[i]+'pts';
-        ctx.font='bold 10px Inter,system-ui,sans-serif';
-        const tw=ctx.measureText(totalTxt).width+6;
-        ctx.fillStyle=_tc.isLight?'rgba(255,255,255,0.85)':'rgba(10,22,40,0.6)';
-        ctx.beginPath();
-        ctx.roundRect(xPos-tw/2,yTop-16,tw,13,3);
-        ctx.fill();
-        const [,col]=scoreBadge(totals[i]);
-        ctx.fillStyle=col;
-        ctx.fillText(totalTxt,xPos,yTop-5);
-        // Melhor horário acima da pontuação
+        const total=totals[i];
         const hourTxt=String(bestHours[i]).padStart(2,'0')+'h';
-        ctx.font='bold 9px Inter,system-ui,sans-serif';
-        ctx.fillStyle=_tc.textDim;
-        ctx.fillText(hourTxt,xPos,yTop-18);
+        const scoreTxt=total+'pts';
+        const isBest=total===maxTot;
+
+        // Mede os dois textos
+        ctx.font='700 10px Inter,system-ui,sans-serif';
+        const scoreWidth=ctx.measureText(scoreTxt).width;
+        ctx.font='500 9px Inter,system-ui,sans-serif';
+        const hourWidth=ctx.measureText(hourTxt).width;
+        const pillW=Math.max(scoreWidth,hourWidth)+16;
+        const pillH=30;
+        const pillX=xPos-pillW/2;
+        const pillY=yTop-pillH-4;
+
+        // Fundo do pill
+        const [,scoreCol]=scoreBadge(total);
+        ctx.save();
+        if(isBest){
+          // Melhor dia: pill preenchido com a cor do rating
+          ctx.fillStyle=scoreCol;
+          ctx.shadowColor=scoreCol+'55';
+          ctx.shadowBlur=8;
+        } else {
+          // Dias normais: pill translúcido
+          ctx.fillStyle=_tc.isLight?'rgba(255,255,255,0.92)':'rgba(11,27,51,0.82)';
+          ctx.strokeStyle=_tc.isLight?'rgba(10,40,80,.1)':'rgba(255,255,255,.08)';
+          ctx.lineWidth=1;
+        }
+        ctx.beginPath();
+        if(ctx.roundRect)ctx.roundRect(pillX,pillY,pillW,pillH,8);
+        else ctx.rect(pillX,pillY,pillW,pillH);
+        ctx.fill();
+        if(!isBest)ctx.stroke();
+        ctx.restore();
+
+        // Texto: hora em cima, score embaixo
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.font='500 9px Inter,system-ui,sans-serif';
+        ctx.fillStyle=isBest?'rgba(255,255,255,0.85)':_tc.textMute;
+        ctx.fillText(hourTxt,xPos,pillY+9);
+        ctx.font='800 11px Inter,system-ui,sans-serif';
+        ctx.fillStyle=isBest?'#fff':scoreCol;
+        ctx.fillText(scoreTxt,pillY?xPos:xPos,pillY+20);
+
+        // Estrela no melhor dia
+        if(isBest){
+          ctx.font='12px system-ui';
+          ctx.fillStyle='#fff';
+          ctx.fillText('★',pillX+10,pillY+pillH/2);
+        }
       }
       ctx.restore();
     }
   };
 
-  const ctx=document.getElementById('weekChart');
+  const ctx=document.getElementById(targetCanvasId||'weekChart');
   if(!ctx)return;
-  if(weekChart)weekChart.destroy();
-  weekChart=new Chart(ctx,{
+  if(isFullscreen){
+    if(window.weekChartFull)window.weekChartFull.destroy();
+  } else {
+    if(weekChart)weekChart.destroy();
+  }
+
+  // Gradientes lindos em cada série
+  const ctx2d=ctx.getContext('2d');
+  const H=ctx.height||300;
+  function grad(topColor,bottomColor){
+    const g=ctx2d.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,topColor);
+    g.addColorStop(1,bottomColor);
+    return g;
+  }
+  const gOnda=grad('rgba(61,217,176,0.95)','rgba(29,158,117,0.75)');
+  const gPeriodo=grad('rgba(91,169,255,0.95)','rgba(45,120,200,0.75)');
+  const gVento=grad('rgba(250,199,117,0.95)','rgba(210,150,60,0.75)');
+  const gOffshore=grad('rgba(127,240,206,0.95)','rgba(70,190,155,0.75)');
+  const gMare=grad('rgba(217,155,60,0.95)','rgba(160,95,15,0.75)');
+
+  // Destaque sutil no melhor dia
+  const maxTotal=Math.max(...totals);
+
+  const _newWeekChart=new Chart(ctx,{
     plugins:[weekOverlay],
     data:{
       labels,
       datasets:[
-        {type:'bar',label:'Onda',data:dWave,backgroundColor:'rgba(29,158,117,0.75)',borderColor:'rgba(29,158,117,0.9)',borderWidth:1,borderRadius:{topLeft:0,topRight:0},stack:'score',yAxisID:'y',order:2},
-        {type:'bar',label:'Período',data:dPeriod,backgroundColor:'rgba(55,138,221,0.75)',borderColor:'rgba(55,138,221,0.9)',borderWidth:1,stack:'score',yAxisID:'y',order:2},
-        {type:'bar',label:'Vento',data:dWind,backgroundColor:'rgba(250,199,117,0.75)',borderColor:'rgba(250,199,117,0.9)',borderWidth:1,stack:'score',yAxisID:'y',order:2},
-        {type:'bar',label:'Offshore',data:dOffshore,backgroundColor:'rgba(93,202,165,0.75)',borderColor:'rgba(93,202,165,0.9)',borderWidth:1,stack:'score',yAxisID:'y',order:2},
-        {type:'bar',label:'Maré',data:dTide,backgroundColor:'rgba(186,117,23,0.75)',borderColor:'rgba(186,117,23,0.9)',borderWidth:1,borderRadius:{topLeft:3,topRight:3},stack:'score',yAxisID:'y',order:2}
+        {type:'bar',label:'Onda',     data:dWave,     backgroundColor:gOnda,     borderColor:'rgba(29,158,117,1)', borderWidth:0, stack:'score', yAxisID:'y', order:2},
+        {type:'bar',label:'Período',  data:dPeriod,   backgroundColor:gPeriodo,  borderColor:'rgba(45,120,200,1)', borderWidth:0, stack:'score', yAxisID:'y', order:2},
+        {type:'bar',label:'Vento',    data:dWind,     backgroundColor:gVento,    borderColor:'rgba(210,150,60,1)', borderWidth:0, stack:'score', yAxisID:'y', order:2},
+        {type:'bar',label:'Offshore', data:dOffshore, backgroundColor:gOffshore, borderColor:'rgba(70,190,155,1)', borderWidth:0, stack:'score', yAxisID:'y', order:2},
+        {type:'bar',label:'Maré',     data:dTide,     backgroundColor:gMare,     borderColor:'rgba(160,95,15,1)',  borderWidth:0, stack:'score', yAxisID:'y', order:2, borderRadius:{topLeft:6,topRight:6},borderSkipped:false}
       ]
     },
     options:{
       responsive:true,
+      maintainAspectRatio:false,
       onClick:(e,els)=>{if(els.length)selectDay(els[0].index);},
       interaction:{mode:'index',intersect:false},
+      layout:{padding:{top:28,right:10,bottom:4,left:2}},
       plugins:{
-        legend:{
-          display:false
-        },
+        legend:{display:false},
         tooltip:{
           backgroundColor:_tc.tooltipBg,
           borderColor:_tc.isLight?'rgba(10,40,80,.12)':'rgba(255,255,255,0.1)',
           borderWidth:1,
           titleColor:_tc.accent,
           bodyColor:_tc.text,
+          padding:12,
+          cornerRadius:10,
+          titleFont:{size:12,weight:'600',family:'Inter,system-ui,sans-serif'},
+          bodyFont:{size:11,family:'Inter,system-ui,sans-serif'},
           callbacks:{
             title:items=>labels[items[0].dataIndex].replace('\n',' '),
             label:c=>{
@@ -1530,11 +1734,31 @@ function renderWeekChart(){
         }
       },
       scales:{
-        x:{grid:{color:_tc.grid},ticks:{color:_tc.tick,font:{size:10}}},
-        y:{position:'left',stacked:true,grid:{color:_tc.grid},ticks:{color:_tc.textMute,font:{size:9}},beginAtZero:true,title:{display:true,text:'Score',color:_tc.textMute,font:{size:9}}}
+        x:{
+          grid:{display:false,drawBorder:false},
+          border:{display:false},
+          ticks:{color:_tc.textDim,font:{size:11,weight:'500',family:'Inter,system-ui,sans-serif'},padding:6}
+        },
+        y:{
+          position:'left',
+          stacked:true,
+          grid:{color:_tc.grid,drawBorder:false},
+          border:{display:false},
+          ticks:{display:false},
+          beginAtZero:true,
+          title:{display:false}
+        }
+      },
+      // Barras mais largas
+      datasets:{
+        bar:{
+          categoryPercentage:0.78,
+          barPercentage:0.92
+        }
       }
     }
   });
+  if(isFullscreen){window.weekChartFull=_newWeekChart;} else {weekChart=_newWeekChart;}
 }
 
 function renderChart(targetCanvasId){
@@ -1866,22 +2090,42 @@ function renderChart(targetCanvasId){
   if(isFullscreen){window.chartFull=_newChart;} else {chart=_newChart;}
 }
 
-function openChartFullscreen(){
+function openChartFullscreen(type){
   if(!data)return;
+  type=type||'main';
   const modal=document.getElementById('chartModal');
   const title=document.getElementById('chartModalTitle');
+  const canvasMain=document.getElementById('mainChartFull');
+  const canvasWeek=document.getElementById('weekChartFull');
+  const legendMain=document.getElementById('chartModalLegendMain');
+  const legendWeek=document.getElementById('chartModalLegendWeek');
+
+  // Mostra só o canvas e legenda correspondentes
+  canvasMain.style.display=type==='main'?'block':'none';
+  canvasWeek.style.display=type==='week'?'block':'none';
+  legendMain.style.display=type==='main'?'flex':'none';
+  legendWeek.style.display=type==='week'?'flex':'none';
+
   if(title){
     const s=SPOTS[curSpot];
-    const m=data.marine;
-    const dd=new Date(m.hourly.time[chartDay*24]);
-    const isToday=chartDay===0;
-    const label=isToday?'Hoje':`${DAYS_PT[dd.getDay()]}, ${dd.getDate()}/${dd.getMonth()+1}`;
-    title.textContent=`${s.name} — ${label}`;
+    if(type==='main'){
+      const m=data.marine;
+      const dd=new Date(m.hourly.time[chartDay*24]);
+      const isToday=chartDay===0;
+      const label=isToday?'Hoje':`${DAYS_PT[dd.getDay()]}, ${dd.getDate()}/${dd.getMonth()+1}`;
+      title.textContent=`${s.name} — ${label}`;
+    } else {
+      title.textContent=`${s.name} — Melhor dia da semana`;
+    }
   }
   modal.classList.add('open');
+  modal.dataset.type=type;
   document.body.style.overflow='hidden';
   // Renderiza no canvas full depois do modal aparecer (pra ter dimensões corretas)
-  setTimeout(()=>renderChart('mainChartFull'),50);
+  setTimeout(()=>{
+    if(type==='main')renderChart('mainChartFull');
+    else renderWeekChart('weekChartFull');
+  },50);
 }
 
 function closeChartFullscreen(ev){
@@ -1890,6 +2134,7 @@ function closeChartFullscreen(ev){
   modal.classList.remove('open');
   document.body.style.overflow='';
   if(window.chartFull){window.chartFull.destroy();window.chartFull=null;}
+  if(window.weekChartFull){window.weekChartFull.destroy();window.weekChartFull=null;}
 }
 
 // ESC fecha
@@ -1899,6 +2144,20 @@ document.addEventListener('keydown',e=>{
     if(modal&&modal.classList.contains('open'))closeChartFullscreen();
   }
 });
+
+function switchMapLayer(layer,btn){
+  const iframe=document.getElementById('windyMap');
+  if(!iframe)return;
+  // Windy usa overlay=X; product depende: ondas usam ecmwfWaves, vento usa ecmwf
+  const product=(layer==='waves'||layer==='swellperiod')?'ecmwfWaves':'ecmwf';
+  const src=`https://embed.windy.com/embed2.html?lat=-3.5&lon=-38.8&detailLat=-3.5&detailLon=-38.8&width=650&height=450&zoom=8&level=surface&overlay=${layer}&product=${product}&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=true&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
+  iframe.src=src;
+  // Atualiza estado visual dos botões
+  if(btn){
+    btn.parentElement.querySelectorAll('.map-layer-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+}
 
 function openRoute(){
   const s=SPOTS[curSpot];
