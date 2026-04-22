@@ -197,65 +197,6 @@ body{
 [data-theme="light"] .astro-moon{display:none;}
 
 /* ============================================
-   MAPA DE SWELL (Windy embed)
-   ============================================ */
-.map-wrap{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:16px;
-  overflow:hidden;
-  box-shadow:var(--shadow);
-  position:relative;
-  aspect-ratio:16/10;
-  min-height:360px;
-}
-.map-wrap iframe{
-  width:100%;
-  height:100%;
-  border:0;
-  display:block;
-}
-.map-layer-btn{
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  color:var(--text-dim);
-  padding:5px 12px;
-  border-radius:999px;
-  font-size:11px;
-  font-weight:600;
-  cursor:pointer;
-  font-family:inherit;
-  transition:all .2s ease;
-  letter-spacing:.01em;
-}
-.map-layer-btn:hover{background:var(--surface-hi);color:var(--text);border-color:var(--border-hi);}
-.map-layer-btn.active{
-  background:var(--accent);
-  border-color:var(--accent);
-  color:#fff;
-}
-.map-open-btn{
-  display:inline-flex;
-  align-items:center;
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  color:var(--text-dim);
-  padding:5px 12px;
-  border-radius:999px;
-  font-size:11px;
-  font-weight:600;
-  cursor:pointer;
-  font-family:inherit;
-  transition:all .2s ease;
-  text-decoration:none;
-}
-.map-open-btn:hover{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);}
-
-@media(max-width:700px){
-  .map-wrap{min-height:320px;aspect-ratio:4/3;}
-}
-
-/* ============================================
    BOTÃO EXPANDIR GRÁFICO
    ============================================ */
 .expand-btn{
@@ -1362,27 +1303,6 @@ function buildHTML(){
         </div>
       </div>
     </div>
-
-    <div class="sec">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap;">
-        <div class="sec-title" style="margin-bottom:0;">Mapa de swell — Litoral Ceará</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="map-layer-btn active" data-layer="swellperiod" onclick="switchMapLayer('swellperiod',this)">Período</button>
-          <button class="map-layer-btn" data-layer="waves" onclick="switchMapLayer('waves',this)">Ondas</button>
-          <button class="map-layer-btn" data-layer="wind" onclick="switchMapLayer('wind',this)">Vento</button>
-          <a href="https://www.windy.com/?-3.500,-38.800,8" target="_blank" rel="noopener" class="map-open-btn" title="Abrir no Windy.com">↗ Windy</a>
-        </div>
-      </div>
-      <div class="map-wrap">
-        <iframe
-          id="windyMap"
-          src="https://embed.windy.com/embed2.html?lat=-3.5&lon=-38.8&detailLat=-3.5&detailLon=-38.8&width=650&height=450&zoom=8&level=surface&overlay=swellperiod&product=ecmwfWaves&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=true&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1"
-          frameborder="0"
-          loading="lazy"
-          allowfullscreen></iframe>
-      </div>
-      <div style="font-size:10px;color:var(--text-faint);margin-top:6px;text-align:right;">Fonte: windy.com · modelo ECMWF Waves</div>
-    </div>
 `;
 }
 
@@ -2144,20 +2064,6 @@ document.addEventListener('keydown',e=>{
     if(modal&&modal.classList.contains('open'))closeChartFullscreen();
   }
 });
-
-function switchMapLayer(layer,btn){
-  const iframe=document.getElementById('windyMap');
-  if(!iframe)return;
-  // Windy usa overlay=X; product depende: ondas usam ecmwfWaves, vento usa ecmwf
-  const product=(layer==='waves'||layer==='swellperiod')?'ecmwfWaves':'ecmwf';
-  const src=`https://embed.windy.com/embed2.html?lat=-3.5&lon=-38.8&detailLat=-3.5&detailLon=-38.8&width=650&height=450&zoom=8&level=surface&overlay=${layer}&product=${product}&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=true&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
-  iframe.src=src;
-  // Atualiza estado visual dos botões
-  if(btn){
-    btn.parentElement.querySelectorAll('.map-layer-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-  }
-}
 
 function openRoute(){
   const s=SPOTS[curSpot];
